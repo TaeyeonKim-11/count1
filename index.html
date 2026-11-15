@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>계산기</title>
+
+    <style>
+        h1 {
+            text-align: center;
+        }
+
+        .disp {
+            width: 205px;
+            height: 40px;
+            margin-top: 3px;
+            text-align: right;
+            font-family: "Oxanium", sans-serif;
+            font-size: 22pt;
+            display: block;
+        }
+
+        input[type=button] {
+            width: 50px;
+            height: 50px;
+            margin-top: 5px;
+            text-align: center;
+            vertical-align: middle;
+        }
+
+        #calc {
+            width: 220px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+    </style>
+
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+
+    <script>
+        $(document).ready(function() {
+
+            // 숫자를 눌렀을 때
+            $(".num").click(function() {
+                let cur = $("#disp2").val();
+                let n = $(this).val();
+
+                if (cur === "오류") {
+                    cur = "";
+                }
+
+                $("#disp2").val(cur + n);
+            });
+
+            // 연산자를 눌렀을 때
+            $(".op").click(function() {
+                let cur = $("#disp2").val();
+                let n = $(this).val();
+
+                if (n !== "=") {
+                    if (cur === "오류") {
+                        cur = "";
+                    }
+
+                    $("#disp2").val(cur + n);
+                }
+
+                else {
+                    try {
+                        let result = calculate(cur);
+
+                        $("#disp1").val(cur);
+                        $("#disp2").val(result);
+                    }
+                    catch (error) {
+                        $("#disp1").val(cur);
+                        $("#disp2").val("오류");
+                    }
+                }
+            });
+
+            // AC 버튼 눌렀을 때
+            $(".func").click(function() {
+                $("#disp1").val("");
+                $("#disp2").val("");
+            });
+
+        });
+
+
+        // eval을 사용하지 않고 수식을 직접 계산하는 함수
+        function calculate(expression) {
+
+            let position = 0;
+
+            // 숫자 읽기
+            function getNumber() {
+
+                let start = position;
+
+                if (expression[position] === "-") {
+                    position++;
+                    return -getNumber();
+                }
+
+                if (expression[position] === "+") {
+                    position++;
+                    return getNumber();
+                }
+
+                while (
+                    position < expression.length &&
+                    /[0-9.]/.test(expression[position])
+                ) {
+                    position++;
+                }
+
+                let value = expression.substring(start, position);
+
+                if (
+                    value === "" ||
+                    !/^(?:\d+\.?\d*|\.\d+)$/.test(value)
+                ) {
+                    throw new Error("잘못된 수식");
+                }
+
+                return Number(value);
+            }
+
+
+            // 곱셈나눗셈
+            function multiplyDivide() {
+
+                let result = getNumber();
+
+                while (position < expression.length) {
+
+                    let op = expression[position];
+
+                    if (op !== "*" && op !== "/") {
+                        break;
+                    }
+
+                    position++;
+
+                    let next = getNumber();
+
+                    if (op === "*") {
+                        result = result * next;
+                    }
+                    else {
+                        if (next === 0) {
+                            throw new Error("0으로 나눌 수 없습니다.");
+                        }
+
+                        result = result / next;
+                    }
+                }
+
+                return result;
+            }
+
+
+            // 덧셈뺄셈
+            function addSubtract() {
+
+                let result = multiplyDivide();
+
+                while (position < expression.length) {
+
+                    let op = expression[position];
+
+                    if (op !== "+" && op !== "-") {
+                        break;
+                    }
+
+                    position++;
+
+                    let next = multiplyDivide();
+
+                    if (op === "+") {
+                        result = result + next;
+                    }
+                    else {
+                        result = result - next;
+                    }
+                }
+
+                return result;
+            }
+
+
+            if (expression === "") {
+                throw new Error("수식이 없습니다.");
+            }
+
+            let result = addSubtract();
+
+            // 잘못된 수식 확인
+            if (
+                position !== expression.length ||
+                !Number.isFinite(result)
+            ) {
+                throw new Error("잘못된 수식");
+            }
+
+            return String(Number(result.toPrecision(12)));
+        }
+
+    </script>
+
+</head>
+
+<body>
+
+    <h1>계산기</h1>
+
+    <div id="calc">
+
+        <form id="calculatorForm" onsubmit="return false;">
+
+            <div>
+                <input type="text" class="disp" id="disp1" readonly>
+                <input type="text" class="disp" id="disp2" readonly>
+            </div>
+
+            <input type="button" class="num" value="7">
+            <input type="button" class="num" value="8">
+            <input type="button" class="num" value="9">
+            <input type="button" class="op" value="+"><br>
+
+            <input type="button" class="num" value="4">
+            <input type="button" class="num" value="5">
+            <input type="button" class="num" value="6">
+            <input type="button" class="op" value="-"><br>
+
+            <input type="button" class="num" value="1">
+            <input type="button" class="num" value="2">
+            <input type="button" class="num" value="3">
+            <input type="button" class="op" value="*"><br>
+
+            <input type="button" class="func" value="AC">
+            <input type="button" class="num" value="0">
+            <input type="button" class="op" value="=">
+            <input type="button" class="op" value="/">
+
+        </form>
+
+    </div>
+
+</body>
+</html>
